@@ -1,0 +1,53 @@
+library(forecast)
+library(TTR)
+library(graphics)
+library(readxl)
+data <- read_excel("E:/KULIAH/S2 IPB/ASISTEN/P3 MPDW.xlsx", 
+                      range = "B2:B52") #input data
+
+#membentuk objek time series
+data.ts=ts(data)
+#plot data time series
+plot(data.ts,main='Plot deret waktu', xlab='Periode', col='red', lwd=2)
+points(data.ts,col='blue')
+
+#single exponential smoothing dengan lambda=0.2
+lambda=0.2
+data.ses=HoltWinters(data.ts, alpha=lambda, beta = FALSE, gamma = FALSE)
+data.ses
+#perlu diperhatikan
+#secara sistem, di R inisialisasinya menggunakan data Y ke-1
+#beda dgn minitab yang menggunakan rata2 dari 6 data awal
+data.ses$SSE #nilai SSE nya
+data.ses$fitted #nilai ft
+data.ramal<-forecast(data.ses,h=2) #hasil ramal
+data.ramal
+View(data.ses)
+points(data.ts)
+
+#membuat tabel olahan
+#membuat kolom data asli dan SES
+data1=data.frame(cbind(data$Yt,c(data.ses$fitted[,1],data.frame(data.ramal)[1,1])))
+names(data1)=c('Yt','SES')
+#membuat kolom ft
+data1$Ft=c(data.ses$fitted[1,1],data.ses$fitted[,1])
+#membuat kolom error
+data1$e=(data1$Yt-data1$Ft)
+#membuat kolom abs error
+data1$abs_e=abs(data1$e)
+#membuat kolom sq error
+data1$sq_e=(data1$e)^2
+#membuat kolom rel error
+data1$rel_e=(data1$e/data1$Yt)*100
+#membuat kolom abs rel error
+data1$abs_rel_e=abs(data1$rel_e)
+data1
+
+#menghitung nilai keakuratan (SSE, MSE dan MAPE)
+SSE=sum(data1$sq_e)
+MSD=mean(data1$sq_e)
+MAPE=mean(data1$abs_rel_e)
+MAD=mean(data1$abs_e)
+#menggabungkan SSE, MSE, MAPE dan MAD ke dalam tabel keterangan
+keterangan=data.frame(SSE,MSD,MAPE,MAD)
+keterangan
